@@ -9,5 +9,10 @@
     ],
     "require": {
         "ignittion/Kong-php": "^1.0"
+    },
+    "autoload": {
+	    "psr-4": {
+		"KWRI\\KongPublisher\\": "src/"
+	    }
     }
 }
