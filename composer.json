@@ -1,0 +1,13 @@
+{
+    "name": "kwri/laravel-kong-route-publisher",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Nurcahyo al Hidayah",
+            "email": "2light.hidayah@gmail.com"
+        }
+    ],
+    "require": {
+        "ignittion/Kong-php": "^1.0"
+    }
+}
