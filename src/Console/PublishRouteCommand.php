@@ -156,7 +156,6 @@ class PublishRouteCommand extends Command
                 $api->call('put', "apis", [], $options);
                 $this->info($uri . " published");
 
-
             }
         } catch (\Exception $e) {
             throw $e;
