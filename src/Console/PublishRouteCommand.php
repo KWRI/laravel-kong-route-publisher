@@ -59,9 +59,12 @@ class PublishRouteCommand extends Command
 
         $this->router = $router;
         $this->routes = $router->getRoutes();
+        $kongUrl = getenv('KONG_URL') ?: 'http://localhost';
+        $kongPort = getenv('KONG_PORT', '8001') ?: 8001;
+
         $this->client = new Kong(
-            getenv('KONG_URL', 'http://localhost'),
-            getenv('KONG_PORT', '8001')
+            $kongUrl,
+            $kongPort
         );
 
         $this->filesystem = app(Filesystem::class);
