@@ -155,7 +155,7 @@ class PublishRouteCommand extends Command
                     'upstream_url' => url($uri),
                 ];
 
-                dd($api->call('put', "apis", [], $options));
+                $api->call('put', "apis", [], $options);
                 $this->info($uri . " published");
 
             }
