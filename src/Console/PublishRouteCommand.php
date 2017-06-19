@@ -150,13 +150,12 @@ class PublishRouteCommand extends Command
 
                 $options = [
                     'name' => $name,
-                    'hosts' => $host,
                     'uris' => '/' . $uri,
                     'methods' => $methods,
                     'upstream_url' => url($uri),
                 ];
 
-                $api->call('put', "apis", [], $options);
+                dd($api->call('put', "apis", [], $options));
                 $this->info($uri . " published");
 
             }
