@@ -10,6 +10,7 @@ use Illuminate\Console\Command;
 use Illuminate\Routing\Controller;
 use Symfony\Component\Console\Input\InputOption;
 use Ignittion\Kong\Kong;
+use Illuminate\Filesystem\Filesystem;
 
 class PublishRouteCommand extends Command
 {
@@ -42,6 +43,9 @@ class PublishRouteCommand extends Command
     protected $routes;
 
 
+    private $client;
+
+    private $filesystem;
 
     /**
      * Create a new route command instance.
@@ -59,6 +63,8 @@ class PublishRouteCommand extends Command
             getenv('KONG_URL', 'http://localhost'),
             getenv('KONG_PORT', '8001')
         );
+
+        $this->filesystem = app(Filesystem::class);
     }
 
     /**
@@ -121,7 +127,6 @@ class PublishRouteCommand extends Command
 
     public function isValidRoute($route)
     {
-
         return $route['uri'] !== '/' && (strpos($route['uri'], '{') === false);
     }
 
@@ -137,28 +142,48 @@ class PublishRouteCommand extends Command
             $nodes = $this->client->node()->get();
             $this->assertKongIsLife($nodes);
             $api = $this->client->api();
+            $payloads = [];
+            $invalidRoute = [];
             foreach ($routes as $route) {
-                $uri = $route['uri'];
+
                 if (!$this->isValidRoute($route)) {
+                    $invalidRoute[] = $route;
                     continue;
                 }
 
+                $uri = $route['uri'];
                 $host = str_replace(['http://', 'https://'], '', url('/'));
-                $name = $route['name'];
-
+                $name = str_replace('/', '.', $uri);
                 $methods = implode(',', $route['method']);
 
-                $options = [
-                    'name' => $name,
-                    'uris' => '/' . $uri,
-                    'methods' => $methods,
-                    'upstream_url' => url($uri),
-                ];
-
-                $api->call('put', "apis", [], $options);
-                $this->info($uri . " published");
-
+                if (isset($payloads[$name])) {
+                    $payloads[$name]['methods'] .= ',' . $methods;
+                } else {
+                    $payloads[$name] = [
+                        'name' => $name,
+                        'uris' => '/' . $uri,
+                        'methods' => $methods,
+                        'upstream_url' => url($uri),
+                    ];
+                }
             }
+            // Create pushed log file
+            $logFile = storage_path('logs');
+            // Create not registered log file
+            $this->filesystem->put(
+                $logFile . '/invalid-kong-route-'. date('Y-m-d',time()) . '.log',
+                json_encode($invalidRoute)
+            );
+
+            foreach ($payloads as $payload) {
+                $response = $api->call('put', "apis", [], $payload);
+                $this->filesystem->append(
+                    $logFile . '/pushed-kong-route-'. date('Y-m-d',time()) . '.log',
+                    json_encode($response) . "\n\n"
+                );
+                $this->info($payload['name'] . " published");
+            }
+
         } catch (\Exception $e) {
             throw $e;
         }
